@@ -1,12 +1,10 @@
-package ru.example.service;
+package ru.example.security;
 
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import ru.example.model.CustomUserDetails;
 import ru.example.model.User;
 import ru.example.repo.UserRepo;
 
@@ -23,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        User user = userRepo.findByUsername(username)
+        User user = userRepo.findByUserName(username)
                 .orElseThrow(()-> new UsernameNotFoundException("User not found"));
 
         return new CustomUserDetails(user);

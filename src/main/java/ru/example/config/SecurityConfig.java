@@ -1,4 +1,4 @@
-package ru.example.service;
+package ru.example.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import ru.example.security.CustomUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
@@ -24,18 +25,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())  // по необходимости
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/auth/register").permitAll()   // разрешаем всем доступ к регистрации
+                        .requestMatchers("/login").permitAll()           // разрешаем всем доступ к логину
+                        .anyRequest().authenticated()                     // остальные требуют аутентификации
                 )
                 .formLogin(form -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/shorten", true)
+                        .loginPage("/login")      // указываем свою страницу логина
                         .permitAll()
                 )
                 .logout(logout -> logout.permitAll())
                 .build();
+
     }
 
     @Bean

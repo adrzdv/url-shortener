@@ -1,4 +1,4 @@
-package ru.example.service;
+package ru.example.service.auth;
 
 import ru.example.dto.UserRegistrationDto;
 

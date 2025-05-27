@@ -1,6 +1,5 @@
-package ru.example.service;
+package ru.example.service.auth;
 
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void register(UserRegistrationDto userDto) {
 
-        if (userRepo.existsByUserName(userDto.getUsername())) {
+        if (userRepo.existsByUserName(userDto.getUserName())) {
             throw new RuntimeException("User already exists");
         }
 
@@ -42,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("Default role not found"));
 
         User user = new User();
-        user.setName(userDto.getUsername());
+        user.setUserName(userDto.getUserName());
         user.setPassword(encodedPassword);
         user.setRoles(Set.of(userRole));
 
