@@ -11,7 +11,6 @@ import ru.example.model.ShortUrl;
 import ru.example.service.shortener.ShortenerService;
 
 import java.net.URI;
-import java.time.LocalDate;
 
 @Tag(name = "Generating short url")
 @RestController
@@ -31,22 +30,11 @@ public class ShortUrlController {
     @GetMapping("/{code}")
     public ResponseEntity<Void> redirectToOriginal(@PathVariable String code) {
 
-        try {
-            ShortUrl shortUrl = shortenerService.findByCode(code);
+        ShortUrl shortUrl = shortenerService.findByCode(code);
 
-            if (shortUrl == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-            } else if (shortUrl.getExpiresAt().isBefore(LocalDate.now())) {
-                ResponseEntity.status(HttpStatus.GONE);
-            }
-
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(shortUrl.getOriginalUrl()))
-                    .build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(shortUrl.getOriginalUrl()))
+                .build();
 
     }
 }

@@ -4,8 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.example.controller.ShortUrlController;
 import ru.example.dto.UrlShortenerDto;
+import ru.example.exception.NotFoundShortUrlException;
+import ru.example.exception.VisitLimitExceedException;
 import ru.example.model.ShortUrl;
 import ru.example.repo.ShortUrlRepo;
 
@@ -45,6 +46,12 @@ public class ShortenerServiceImpl implements ShortenerService {
             shortUrl.setExpiresAt(shortUrl.getCreatedAt().plusDays(1L));
         }
 
+        if (urlShortener.getMaxVisit() != null) {
+            shortUrl.setMaxVisit(urlShortener.getMaxVisit());
+        } else {
+            shortUrl.setMaxVisit(null);
+        }
+
         shortUrl.setOriginalUrl(urlShortener.getOriginalUrl());
         shortUrl.setShortCode(generateUniqueCode());
 
@@ -59,19 +66,28 @@ public class ShortenerServiceImpl implements ShortenerService {
 
     @Override
     @Transactional
-    public ShortUrl findByCode(String code) throws RuntimeException {
+    public ShortUrl findByCode(String code) throws VisitLimitExceedException, NotFoundShortUrlException {
 
         ShortUrl cached = redisTemplate.opsForValue().get(code);
 
         if (cached != null) {
+            if (cached.getMaxVisit() != null && cached.getMaxVisit() < cached.getVisitCount()) {
+                throw new VisitLimitExceedException("Visit limit exceed");
+            }
             cached.setVisitCount(cached.getVisitCount() + 1);
+            redisTemplate.opsForValue().set(cached.getShortCode(), cached);
             return cached;
         }
 
         ShortUrl fromDb = shortUrlRepo.findByShortCode(code)
-                .orElseThrow(() -> new RuntimeException("Not found"));
+                .orElseThrow(() -> new NotFoundShortUrlException("Not found"));
+
+        if (fromDb.getMaxVisit() != null && fromDb.getMaxVisit() < fromDb.getVisitCount()) {
+            throw new VisitLimitExceedException("Visit limit exceed");
+        }
 
         fromDb.setVisitCount(fromDb.getVisitCount() + 1);
+        redisTemplate.opsForValue().set(fromDb.getShortCode(), fromDb);
 
         return fromDb;
     }

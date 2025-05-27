@@ -18,4 +18,6 @@ public class UrlShortenerDto {
     @Min(1)
     @Max(365)
     private Integer ttlDays;
+    @Min(1)
+    private Integer maxVisit;
 }

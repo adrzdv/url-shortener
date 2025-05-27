@@ -29,6 +29,8 @@ public class ShortUrl {
     private LocalDate expiresAt;
     @Column(nullable = false)
     private Integer visitCount;
+    @Column
+    private Integer maxVisit;
 
     @PrePersist
     public void prePersist() {
