@@ -31,9 +31,12 @@ public class ShortUrl {
     private Integer visitCount;
     @Column
     private Integer maxVisit;
+    @Column(nullable = false)
+    private Boolean isApproved;
 
     @PrePersist
     public void prePersist() {
+        isApproved = false;
         if (createdAt == null) {
             createdAt = LocalDate.now();
         }

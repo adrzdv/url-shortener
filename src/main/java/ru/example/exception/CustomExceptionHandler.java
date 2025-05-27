@@ -22,7 +22,6 @@ public class CustomExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
-
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
 
@@ -30,5 +29,10 @@ public class CustomExceptionHandler {
     public ResponseEntity<String> handleValidationErrors(MethodArgumentNotValidException ex) {
         return ResponseEntity.badRequest().body("Validation failed: " +
                 ex.getBindingResult().getFieldError().getDefaultMessage());
+    }
+
+    @ExceptionHandler(NotApprovedException.class)
+    public ResponseEntity<String> handleNotApprovedException(NotApprovedException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

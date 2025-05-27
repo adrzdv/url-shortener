@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.example.dto.UrlShortenerDto;
+import ru.example.exception.NotApprovedException;
 import ru.example.exception.NotFoundShortUrlException;
 import ru.example.exception.VisitLimitExceedException;
 import ru.example.model.ShortUrl;
@@ -73,6 +74,8 @@ public class ShortenerServiceImpl implements ShortenerService {
         if (cached != null) {
             if (cached.getMaxVisit() != null && cached.getMaxVisit() < cached.getVisitCount()) {
                 throw new VisitLimitExceedException("Visit limit exceed");
+            } else if (!cached.getIsApproved()) {
+                throw new NotApprovedException("Link is not approved yet");
             }
             cached.setVisitCount(cached.getVisitCount() + 1);
             redisTemplate.opsForValue().set(cached.getShortCode(), cached);
@@ -84,6 +87,8 @@ public class ShortenerServiceImpl implements ShortenerService {
 
         if (fromDb.getMaxVisit() != null && fromDb.getMaxVisit() < fromDb.getVisitCount()) {
             throw new VisitLimitExceedException("Visit limit exceed");
+        } else if (!fromDb.getIsApproved()) {
+            throw new NotApprovedException("Link is not approved yet");
         }
 
         fromDb.setVisitCount(fromDb.getVisitCount() + 1);
