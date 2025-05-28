@@ -5,6 +5,8 @@ import ru.example.exception.NotFoundShortUrlException;
 import ru.example.exception.VisitLimitExceedException;
 import ru.example.model.ShortUrl;
 
+import java.util.function.Consumer;
+
 /**
  * Service for create and get short urls
  */
@@ -35,4 +37,12 @@ public interface ShortenerService {
      * @return boolean value
      */
     boolean approve(String code);
+
+    /**
+     * Thread safety method for approve url
+     *
+     * @param code    short code of url
+     * @param updater consumer-function for update
+     */
+    void updateShortUrlWithRetry(String code, Consumer<ShortUrl> updater) throws InterruptedException;
 }

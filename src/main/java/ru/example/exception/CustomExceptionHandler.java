@@ -40,4 +40,9 @@ public class CustomExceptionHandler {
     public ResponseEntity<String> handleLinkExpiredException(LinkExpiredException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
+
+    @ExceptionHandler(CustomRuntimeException.class)
+    public ResponseEntity<String> handleCustomRuntimeException(CustomRuntimeException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
 }

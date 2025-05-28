@@ -32,6 +32,8 @@ public class ShortUrl {
     private Integer maxVisit;
     @Column(nullable = false)
     private Boolean isApproved;
+    @Version
+    private Long version;
 
     @PrePersist
     public void prePersist() {
