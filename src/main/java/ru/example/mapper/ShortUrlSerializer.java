@@ -7,32 +7,24 @@ import java.util.Map;
 
 public class ShortUrlSerializer {
 
-    public static final String ORIGINAL_URL_KEY = "originalUrl";
-    public static final String SHORT_CODE_KEY = "shortCode";
-    public static final String CREATED_AT_KEY = "createdAt";
-    public static final String EXPIRES_AT_KEY = "expiresAt";
-    public static final String VISIT_COUNT_KEY = "visitCount";
-    public static final String MAX_VISIT_KEY = "maxVisit";
-    public static final String IS_APPROVED_KEY = "isApproved";
-
     public static Map<String, String> serializeShortUrl(ShortUrl shortUrl) {
-        return Map.of(ORIGINAL_URL_KEY, shortUrl.getOriginalUrl().toString(),
-                SHORT_CODE_KEY, shortUrl.getShortCode().toString(),
-                CREATED_AT_KEY, shortUrl.getCreatedAt().toString(),
-                EXPIRES_AT_KEY, shortUrl.getExpiresAt().toString(),
-                VISIT_COUNT_KEY, shortUrl.getVisitCount().toString(),
-                MAX_VISIT_KEY, shortUrl.getMaxVisit().toString(),
-                IS_APPROVED_KEY, shortUrl.getIsApproved().toString());
+        return Map.of(RedisHashKeyField.ORIGINAL_URL.key(), shortUrl.getOriginalUrl().toString(),
+                RedisHashKeyField.SHORT_CODE.key(), shortUrl.getShortCode().toString(),
+                RedisHashKeyField.CREATED_AT.key(), shortUrl.getCreatedAt().toString(),
+                RedisHashKeyField.EXPIRES_AT.key(), shortUrl.getExpiresAt().toString(),
+                RedisHashKeyField.VISIT_COUNT.key(), shortUrl.getVisitCount().toString(),
+                RedisHashKeyField.MAX_VISIT.key(), shortUrl.getMaxVisit().toString(),
+                RedisHashKeyField.IS_APPROVED.key(), shortUrl.getIsApproved().toString());
     }
 
     public static ShortUrl deserializeFromRedisHash(String code, Map<String, String> hashValue) {
         ShortUrl shortUrl = new ShortUrl();
         shortUrl.setShortCode(code);
-        shortUrl.setOriginalUrl(hashValue.get(ORIGINAL_URL_KEY));
-        shortUrl.setExpiresAt(LocalDate.parse(hashValue.get(EXPIRES_AT_KEY)));
-        shortUrl.setVisitCount(Integer.parseInt(hashValue.get(VISIT_COUNT_KEY)));
-        shortUrl.setMaxVisit(Integer.parseInt(hashValue.get(MAX_VISIT_KEY)));
-        shortUrl.setIsApproved(Boolean.parseBoolean(hashValue.get(IS_APPROVED_KEY)));
+        shortUrl.setOriginalUrl(hashValue.get(RedisHashKeyField.ORIGINAL_URL.key()));
+        shortUrl.setExpiresAt(LocalDate.parse(hashValue.get(RedisHashKeyField.EXPIRES_AT.key())));
+        shortUrl.setVisitCount(Integer.parseInt(hashValue.get(RedisHashKeyField.VISIT_COUNT.key())));
+        shortUrl.setMaxVisit(Integer.parseInt(hashValue.get(RedisHashKeyField.MAX_VISIT.key())));
+        shortUrl.setIsApproved(Boolean.parseBoolean(hashValue.get(RedisHashKeyField.IS_APPROVED.key())));
 
         return shortUrl;
     }

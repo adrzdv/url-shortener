@@ -9,6 +9,7 @@ import ru.example.exception.LinkExpiredException;
 import ru.example.exception.NotApprovedException;
 import ru.example.exception.NotFoundShortUrlException;
 import ru.example.exception.VisitLimitExceedException;
+import ru.example.mapper.RedisHashKeyField;
 import ru.example.mapper.ShortUrlSerializer;
 import ru.example.model.ShortUrl;
 import ru.example.repo.ShortUrlRepo;
@@ -85,7 +86,7 @@ public class ShortenerServiceImpl implements ShortenerService {
             cached.setVisitCount(cached.getVisitCount() + 1);
 
             redisTemplate.opsForHash().increment(redisKey,
-                    ShortUrlSerializer.VISIT_COUNT_KEY,
+                    RedisHashKeyField.VISIT_COUNT.key(),
                     1);
 
             return cached;
@@ -99,7 +100,7 @@ public class ShortenerServiceImpl implements ShortenerService {
         fromDb.setVisitCount(fromDb.getVisitCount() + 1);
 
         redisTemplate.opsForHash().increment(redisKey,
-                ShortUrlSerializer.VISIT_COUNT_KEY,
+                RedisHashKeyField.VISIT_COUNT.key(),
                 1);
 
         return fromDb;
@@ -116,7 +117,7 @@ public class ShortenerServiceImpl implements ShortenerService {
         shortUrl.setIsApproved(true);
 
         redisTemplate.opsForHash().put("short:" + code,
-                ShortUrlSerializer.IS_APPROVED_KEY,
+                RedisHashKeyField.IS_APPROVED.key(),
                 "true");
 
         return true;
