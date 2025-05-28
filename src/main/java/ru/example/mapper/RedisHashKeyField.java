@@ -1,5 +1,8 @@
 package ru.example.mapper;
 
+/**
+ * ENUM with basic redis hash keys
+ */
 public enum RedisHashKeyField {
     ORIGINAL_URL("originalUrl"),
     SHORT_CODE("shortCode"),

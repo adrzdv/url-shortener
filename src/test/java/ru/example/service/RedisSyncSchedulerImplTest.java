@@ -1,4 +1,4 @@
-package ru.example.service.schedular;
+package ru.example.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,8 +10,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import ru.example.mapper.RedisHashKeyField;
 import ru.example.model.ShortUrl;
 import ru.example.repo.ShortUrlRepo;
+import ru.example.service.schedular.RedisSyncSchedulerImpl;
 
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -100,5 +103,42 @@ public class RedisSyncSchedulerImplTest {
         assertEquals(5, shortUrl.getVisitCount());
 
         verify(shortUrlRepo, never()).save(any());
+    }
+
+    @Test
+    void cleanExpiredShorts_emptyList_nothingDeleted() {
+        when(shortUrlRepo.findAllByExpiresAtBefore(any(LocalDate.class))).thenReturn(Collections.emptyList());
+
+        scheduler.cleanExpiredShorts();
+
+        verify(shortUrlRepo).findAllByExpiresAtBefore(any(LocalDate.class));
+        verifyNoMoreInteractions(shortUrlRepo);
+        verifyNoInteractions(redisTemplate);
+    }
+
+    @Test
+    void cleanExpiredShorts_expiredUrls_deletedFromDbAndRedis() {
+        ShortUrl url1 = new ShortUrl();
+        url1.setShortCode("abc123");
+
+        ShortUrl url2 = new ShortUrl();
+        url2.setShortCode("def456");
+
+        List<ShortUrl> expiredUrls = List.of(url1, url2);
+        when(shortUrlRepo.findAllByExpiresAtBefore(any(LocalDate.class))).thenReturn(expiredUrls);
+
+        doNothing().when(shortUrlRepo).deleteAll(expiredUrls);
+        when(redisTemplate.delete(anySet())).thenReturn(1L);
+
+        scheduler.cleanExpiredShorts();
+
+        verify(shortUrlRepo).findAllByExpiresAtBefore(any(LocalDate.class));
+        verify(shortUrlRepo).deleteAll(expiredUrls);
+
+        Set<String> expectedKeys = expiredUrls.stream()
+                .map(url -> REDIS_PREFIX + url.getShortCode())
+                .collect(Collectors.toSet());
+
+        verify(redisTemplate).delete(expectedKeys);
     }
 }
