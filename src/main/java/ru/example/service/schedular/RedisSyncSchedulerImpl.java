@@ -26,7 +26,7 @@ public class RedisSyncSchedulerImpl implements RedisSyncScheduler {
     @Override
     public void syncVisitCountsToDb() {
 
-        Set<String> keys = redisTemplate.keys(RedisHashKeyField.REDIS_PREFIX + "*");
+        Set<String> keys = redisTemplate.keys(RedisHashKeyField.REDIS_PREFIX.key() + "*");
 
         if (keys == null) return;
 
