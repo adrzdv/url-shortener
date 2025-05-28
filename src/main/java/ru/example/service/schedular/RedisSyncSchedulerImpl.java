@@ -24,18 +24,24 @@ public class RedisSyncSchedulerImpl implements RedisSyncScheduler {
 
     @Scheduled(fixedRate = 5 * 60 * 1000)
     @Override
-    public void sync() {
+    public void syncVisitCountsToDb() {
 
-        Set<String> keys = redisTemplate.keys("short:*");
+        Set<String> keys = redisTemplate.keys(RedisHashKeyField.REDIS_PREFIX + "*");
 
         if (keys == null) return;
 
         for (String key : keys) {
             Map<Object, Object> hashValue = redisTemplate.opsForHash().entries(key);
+            String code = key.replaceFirst(RedisHashKeyField.REDIS_PREFIX.key(), "");
 
             Integer visitCount = Integer.parseInt((String) hashValue.get(RedisHashKeyField.VISIT_COUNT.key()));
 
-
+            shortUrlRepo.findByShortCode(code).ifPresent(shortUrl -> {
+                if (shortUrl.getVisitCount() < visitCount) {
+                    shortUrl.setVisitCount(visitCount);
+                    shortUrlRepo.save(shortUrl);
+                }
+            });
         }
 
     }

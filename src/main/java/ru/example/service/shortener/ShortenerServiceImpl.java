@@ -61,7 +61,7 @@ public class ShortenerServiceImpl implements ShortenerService {
         shortUrl.setShortCode(generateUniqueCode());
 
         ShortUrl saved = shortUrlRepo.save(shortUrl);
-        String redisKey = "short:" + saved.getShortCode();
+        String redisKey = RedisHashKeyField.REDIS_PREFIX.key() + saved.getShortCode();
 
         Duration ttl = Duration.between(LocalDateTime.now(), saved.getExpiresAt().atTime(LocalTime.MAX));
 
@@ -77,7 +77,7 @@ public class ShortenerServiceImpl implements ShortenerService {
     public ShortUrl findByCode(String code) throws VisitLimitExceedException, NotFoundShortUrlException {
 
         ShortUrl cached = redisTemplate.opsForValue().get(code);
-        String redisKey = "short:" + code;
+        String redisKey = RedisHashKeyField.REDIS_PREFIX.key() + code;
 
         if (cached != null) {
 
@@ -116,7 +116,7 @@ public class ShortenerServiceImpl implements ShortenerService {
 
         shortUrl.setIsApproved(true);
 
-        redisTemplate.opsForHash().put("short:" + code,
+        redisTemplate.opsForHash().put(RedisHashKeyField.REDIS_PREFIX.key() + code,
                 RedisHashKeyField.IS_APPROVED.key(),
                 "true");
 

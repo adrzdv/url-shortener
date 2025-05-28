@@ -7,7 +7,8 @@ public enum RedisHashKeyField {
     EXPIRES_AT("expiresAt"),
     VISIT_COUNT("visitCount"),
     MAX_VISIT("maxVisit"),
-    IS_APPROVED("isApproved");
+    IS_APPROVED("isApproved"),
+    REDIS_PREFIX("short:");
 
     private final String field;
 
