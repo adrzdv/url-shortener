@@ -9,6 +9,7 @@ import ru.example.exception.LinkExpiredException;
 import ru.example.exception.NotApprovedException;
 import ru.example.exception.NotFoundShortUrlException;
 import ru.example.exception.VisitLimitExceedException;
+import ru.example.mapper.ShortUrlSerializer;
 import ru.example.model.ShortUrl;
 import ru.example.repo.ShortUrlRepo;
 
@@ -17,8 +18,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class ShortenerServiceImpl implements ShortenerService {
@@ -59,10 +60,13 @@ public class ShortenerServiceImpl implements ShortenerService {
         shortUrl.setShortCode(generateUniqueCode());
 
         ShortUrl saved = shortUrlRepo.save(shortUrl);
+        String redisKey = "short:" + saved.getShortCode();
 
-        long ttl = Duration.between(LocalDateTime.now(), saved.getExpiresAt().atTime(LocalTime.MAX)).getSeconds();
+        Duration ttl = Duration.between(LocalDateTime.now(), saved.getExpiresAt().atTime(LocalTime.MAX));
 
-        redisTemplate.opsForValue().set(saved.getShortCode(), saved, ttl, TimeUnit.SECONDS);
+        Map<String, String> hashValue = ShortUrlSerializer.serializeShortUrl(saved);
+        redisTemplate.opsForHash().putAll(redisKey, hashValue);
+        redisTemplate.expire(redisKey, ttl);
 
         return saved;
     }
@@ -72,16 +76,18 @@ public class ShortenerServiceImpl implements ShortenerService {
     public ShortUrl findByCode(String code) throws VisitLimitExceedException, NotFoundShortUrlException {
 
         ShortUrl cached = redisTemplate.opsForValue().get(code);
+        String redisKey = "short:" + code;
 
         if (cached != null) {
 
             validateLinkOnConstraints(code, true, cached);
 
             cached.setVisitCount(cached.getVisitCount() + 1);
-            redisTemplate.opsForValue().set(code,
-                    cached,
-                    Duration.between(LocalDateTime.now(), cached.getExpiresAt().atStartOfDay()).getSeconds(),
-                    TimeUnit.SECONDS);
+
+            redisTemplate.opsForHash().increment(redisKey,
+                    ShortUrlSerializer.VISIT_COUNT_KEY,
+                    1);
+
             return cached;
         }
 
@@ -91,10 +97,10 @@ public class ShortenerServiceImpl implements ShortenerService {
         validateLinkOnConstraints(code, false, fromDb);
 
         fromDb.setVisitCount(fromDb.getVisitCount() + 1);
-        redisTemplate.opsForValue().set(code,
-                fromDb,
-                Duration.between(LocalDateTime.now(), fromDb.getExpiresAt().atStartOfDay()).getSeconds(),
-                TimeUnit.SECONDS);
+
+        redisTemplate.opsForHash().increment(redisKey,
+                ShortUrlSerializer.VISIT_COUNT_KEY,
+                1);
 
         return fromDb;
     }
@@ -109,8 +115,9 @@ public class ShortenerServiceImpl implements ShortenerService {
 
         shortUrl.setIsApproved(true);
 
-        redisTemplate.opsForValue().set(code, shortUrl,
-                Duration.between(LocalDateTime.now(), shortUrl.getExpiresAt()).getSeconds(), TimeUnit.SECONDS);
+        redisTemplate.opsForHash().put("short:" + code,
+                ShortUrlSerializer.IS_APPROVED_KEY,
+                "true");
 
         return true;
     }

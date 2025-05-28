@@ -22,7 +22,6 @@ public class ShortUrl {
     private String shortCode;
     @Column(nullable = false)
     private LocalDate createdAt;
-    //@Column(nullable = false)
     @Transient
     private Integer ttlDays;
     @Column(nullable = false)
