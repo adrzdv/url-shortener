@@ -35,4 +35,9 @@ public class CustomExceptionHandler {
     public ResponseEntity<String> handleNotApprovedException(NotApprovedException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
+
+    @ExceptionHandler(LinkExpiredException.class)
+    public ResponseEntity<String> handleLinkExpiredException(LinkExpiredException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
 }

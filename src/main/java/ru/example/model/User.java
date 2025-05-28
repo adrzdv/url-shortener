@@ -11,7 +11,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"id", "name"})
+@EqualsAndHashCode(of = {"id", "userName"})
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -37,6 +37,8 @@ public class ShortUrl {
     @PrePersist
     public void prePersist() {
         isApproved = false;
+        if (maxVisit == null) maxVisit = 0;
+        visitCount = 0;
         if (createdAt == null) {
             createdAt = LocalDate.now();
         }

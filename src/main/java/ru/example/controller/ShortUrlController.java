@@ -37,4 +37,13 @@ public class ShortUrlController {
                 .build();
 
     }
+
+    @PostMapping("/{code}/approve")
+    public ResponseEntity<Void> approveUrl(@PathVariable String code) {
+        if (shortenerService.approve(code)) {
+            return ResponseEntity.status(HttpStatus.OK).build();
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
 }

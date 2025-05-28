@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.example.dto.UrlShortenerDto;
+import ru.example.exception.LinkExpiredException;
 import ru.example.exception.NotApprovedException;
 import ru.example.exception.NotFoundShortUrlException;
 import ru.example.exception.VisitLimitExceedException;
@@ -15,6 +16,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +52,7 @@ public class ShortenerServiceImpl implements ShortenerService {
         if (urlShortener.getMaxVisit() != null) {
             shortUrl.setMaxVisit(urlShortener.getMaxVisit());
         } else {
-            shortUrl.setMaxVisit(null);
+            shortUrl.setMaxVisit(0);
         }
 
         shortUrl.setOriginalUrl(urlShortener.getOriginalUrl());
@@ -58,7 +60,7 @@ public class ShortenerServiceImpl implements ShortenerService {
 
         ShortUrl saved = shortUrlRepo.save(shortUrl);
 
-        long ttl = Duration.between(LocalDateTime.now(), saved.getExpiresAt().atStartOfDay()).getSeconds();
+        long ttl = Duration.between(LocalDateTime.now(), saved.getExpiresAt().atTime(LocalTime.MAX)).getSeconds();
 
         redisTemplate.opsForValue().set(saved.getShortCode(), saved, ttl, TimeUnit.SECONDS);
 
@@ -72,29 +74,59 @@ public class ShortenerServiceImpl implements ShortenerService {
         ShortUrl cached = redisTemplate.opsForValue().get(code);
 
         if (cached != null) {
-            if (cached.getMaxVisit() != null && cached.getMaxVisit() < cached.getVisitCount()) {
-                throw new VisitLimitExceedException("Visit limit exceed");
-            } else if (!cached.getIsApproved()) {
-                throw new NotApprovedException("Link is not approved yet");
-            }
+
+            validateLinkOnConstraints(code, true, cached);
+
             cached.setVisitCount(cached.getVisitCount() + 1);
-            redisTemplate.opsForValue().set(cached.getShortCode(), cached);
+            redisTemplate.opsForValue().set(code,
+                    cached,
+                    Duration.between(LocalDateTime.now(), cached.getExpiresAt().atStartOfDay()).getSeconds(),
+                    TimeUnit.SECONDS);
             return cached;
         }
 
         ShortUrl fromDb = shortUrlRepo.findByShortCode(code)
                 .orElseThrow(() -> new NotFoundShortUrlException("Not found"));
 
-        if (fromDb.getMaxVisit() != null && fromDb.getMaxVisit() < fromDb.getVisitCount()) {
-            throw new VisitLimitExceedException("Visit limit exceed");
-        } else if (!fromDb.getIsApproved()) {
-            throw new NotApprovedException("Link is not approved yet");
-        }
+        validateLinkOnConstraints(code, false, fromDb);
 
         fromDb.setVisitCount(fromDb.getVisitCount() + 1);
-        redisTemplate.opsForValue().set(fromDb.getShortCode(), fromDb);
+        redisTemplate.opsForValue().set(code,
+                fromDb,
+                Duration.between(LocalDateTime.now(), fromDb.getExpiresAt().atStartOfDay()).getSeconds(),
+                TimeUnit.SECONDS);
 
         return fromDb;
+    }
+
+    @Override
+    @Transactional
+    public boolean approve(String code) {
+
+        ShortUrl shortUrl = shortUrlRepo.findByShortCode(code)
+                .orElseThrow(() ->
+                        new NotFoundShortUrlException("Not found"));
+
+        shortUrl.setIsApproved(true);
+
+        redisTemplate.opsForValue().set(code, shortUrl,
+                Duration.between(LocalDateTime.now(), shortUrl.getExpiresAt()).getSeconds(), TimeUnit.SECONDS);
+
+        return true;
+    }
+
+    private void validateLinkOnConstraints(String code, boolean isCached, ShortUrl shortUrl) {
+
+        if (!shortUrl.getIsApproved()) {
+            throw new NotApprovedException("Link is not approved yet");
+        } else if (!shortUrl.getExpiresAt().isAfter(LocalDate.now())) {
+            if (isCached) redisTemplate.delete(code);
+            throw new LinkExpiredException("Link has expired");
+        } else if (shortUrl.getMaxVisit() != null && shortUrl.getMaxVisit() > 0
+                && shortUrl.getMaxVisit() <= shortUrl.getVisitCount()) {
+            if (isCached) redisTemplate.delete(code);
+            throw new VisitLimitExceedException("Visit limit exceed");
+        }
     }
 
     private String generateRandomString(int length) {
@@ -119,4 +151,6 @@ public class ShortenerServiceImpl implements ShortenerService {
         return code;
 
     }
+
+
 }

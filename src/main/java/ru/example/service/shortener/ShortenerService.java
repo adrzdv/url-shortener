@@ -10,4 +10,6 @@ public interface ShortenerService {
     ShortUrl getShortUrl(UrlShortenerDto urlShortener);
 
     ShortUrl findByCode(String code) throws VisitLimitExceedException, NotFoundShortUrlException;
+
+    boolean approve(String code);
 }
