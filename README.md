@@ -70,7 +70,6 @@ mvn spring-boot:run
 ```json
 {
   "username": "user1",
-  "password": "password",
   "email": "user1@example.com"
 }
 ```
