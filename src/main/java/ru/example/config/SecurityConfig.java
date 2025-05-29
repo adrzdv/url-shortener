@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())  // по необходимости
                 .authorizeHttpRequests(auth -> auth
                                 .anyRequest().permitAll()
+                        // пока разрешим все соединения
 //                        .requestMatchers("/auth/register").permitAll()   // разрешаем всем доступ к регистрации
 //                        .requestMatchers("/login").permitAll()// разрешаем всем доступ к логину
 //                        .requestMatchers("/swagger-ui/**").permitAll()
