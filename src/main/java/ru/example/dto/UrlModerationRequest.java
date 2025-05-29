@@ -5,10 +5,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @AllArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode
-public class UrlModerationRequest {
+public class UrlModerationRequest implements Serializable {
     private String shortCode;
 }

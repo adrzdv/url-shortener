@@ -27,9 +27,12 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())  // по необходимости
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register").permitAll()   // разрешаем всем доступ к регистрации
-                        .requestMatchers("/login").permitAll()           // разрешаем всем доступ к логину
-                        .anyRequest().authenticated()                     // остальные требуют аутентификации
+                                .anyRequest().permitAll()
+//                        .requestMatchers("/auth/register").permitAll()   // разрешаем всем доступ к регистрации
+//                        .requestMatchers("/login").permitAll()// разрешаем всем доступ к логину
+//                        .requestMatchers("/swagger-ui/**").permitAll()
+//                        .requestMatchers("/v3/api-docs/**").permitAll()
+//                        .anyRequest().authenticated()                     // остальные требуют аутентификации
                 )
                 .formLogin(form -> form
                         .loginPage("/login")      // указываем свою страницу логина

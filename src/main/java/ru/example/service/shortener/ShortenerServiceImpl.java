@@ -141,11 +141,12 @@ public class ShortenerServiceImpl implements ShortenerService {
                 updater.accept(shortUrl);
                 ShortUrl saved = shortUrlRepo.save(shortUrl);
 
-                Duration ttl = Duration.between(LocalDate.now(), saved.getExpiresAt().atTime(LocalTime.MAX));
-                String redisKey = RedisHashKeyField.ORIGINAL_URL.key() + saved.getShortCode();
+                Duration ttl = Duration.between(LocalDate.now().atStartOfDay(), saved.getExpiresAt().atTime(LocalTime.MAX));
+                String redisKey = RedisHashKeyField.REDIS_PREFIX.key() + saved.getShortCode();
+                Map<String, String> hashValue = ShortUrlSerializer.serializeShortUrl(saved);
 
-                redisTemplate.opsForHash().putAll(redisKey + saved.getShortCode(),
-                        ShortUrlSerializer.serializeShortUrl(saved));
+                redisTemplate.opsForHash().putAll(redisKey,
+                        hashValue);
 
                 if (!ttl.isNegative() && !ttl.isZero()) {
                     redisTemplate.expire(redisKey, ttl);
@@ -155,6 +156,8 @@ public class ShortenerServiceImpl implements ShortenerService {
             } catch (OptimisticLockException e) {
                 retries--;
                 if (retries == 0) throw e;
+            } catch (Exception e) {
+                return;
             }
 
             //Using exponential backoff for:

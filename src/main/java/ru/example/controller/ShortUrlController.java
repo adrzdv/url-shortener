@@ -31,9 +31,14 @@ public class ShortUrlController {
     public ResponseEntity<Void> redirectToOriginal(@PathVariable String code) {
 
         ShortUrl shortUrl = shortenerService.findByCode(code);
+        String originalUrl = shortUrl.getOriginalUrl();
+
+        if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
+            originalUrl = "http://" + originalUrl;
+        }
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(shortUrl.getOriginalUrl()))
+                .location(URI.create(originalUrl))
                 .build();
 
     }
